@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>看護師国家試験 必修問題完全攻略</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Noto Sans JP', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .option-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-card:active:not(:disabled) { 
+            transform: scale(0.98); 
+        }
+        .option-card:disabled {
+            cursor: not-allowed;
+        }
+        /* 正解時のスタイル */
+        .correct-anim { 
+            background-color: #ecfdf5 !important; 
+            border-color: #10b981 !important; 
+            color: #064e3b !important; 
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+        /* 不正解時のスタイル */
+        .incorrect-anim { 
+            background-color: #fef2f2 !important; 
+            border-color: #ef4444 !important; 
+            color: #7f1d1d !important; 
+            opacity: 0.7;
+        }
+        /* フェードインアニメーション */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* カードフリップ用 */
+        .card-container {
+            perspective: 1000px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 selection:bg-blue-200">
+
+    <div id="app" class="max-w-md md:max-w-xl mx-auto min-h-screen flex flex-col bg-white shadow-xl relative overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold text-sm shadow-sm">
+                        必修
+                    </div>
+                    <h1 class="text-lg font-bold text-slate-800">完全攻略 2024-2025</h1>
+                </div>
+                <button id="home-btn" class="text-sm bg-slate-100 px-4 py-1.5 rounded-full text-slate-600 font-medium hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-300">
+                    終了
+                </button>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div id="status-bar" class="hidden mt-4 fade-in">
+                <div class="flex justify-between text-xs font-medium text-slate-500 mb-1.5 px-1">
+                    <span id="progress-text">問題 1 / 20</span>
+                    <span id="score-text" class="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">正解: 0</span>
+                </div>
+                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div id="progress-fill" class="bg-blue-500 h-full transition-all duration-500 ease-out rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow p-5 md:p-8 overflow-y-auto">
+            
+            <!-- ====== Menu View ====== -->
+            <div id="menu-view" class="space-y-8 pb-8 fade-in">
+                
+                <!-- Hero Section -->
+                <div class="bg-gradient-to-br from-blue-600 to-cyan-600 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
+                    <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+                    <h2 class="text-2xl font-black mb-2 tracking-tight">必修問題 対策メニュー</h2>
+                    <p class="text-sm text-blue-100 leading-relaxed font-medium">
+                        必修問題は絶対評価です。50問中40問（80%）以上取れなければ不合格となります。過去5年の良問とオリジナル予想問題で基礎を固めましょう。
+                    </p>
+                </div>
+
+                <div class="space-y-8">
+                    
+                    <!-- 1. 過去問（年度別）モード -->
+                    <div class="bg-white border-2 border-slate-100 rounded-2xl p-5 shadow-sm">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="text-2xl">📅</span>
+                            <h3 class="text-lg font-black text-slate-800 tracking-tight">過去5年の過去問</h3>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3 font-medium">年度ごとに問題を解いて傾向をつかみましょう。</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="year-btns">
+                            <!-- JS injected buttons -->
+                        </div>
+                    </div>
+
+                    <!-- 2. 頻出問題を学ぶモード（領域別・暗記） -->
+                    <div class="bg-white border-2 border-slate-100 rounded-2xl p-5 shadow-sm">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="text-2xl">📚</span>
+                            <h3 class="text-lg font-black text-slate-800 tracking-tight">頻出問題を学ぶ</h3>
+                        </div>
+                        
+                        <!-- 語呂合わせボタン -->
+                        <button onclick="startApp('goro')" class="w-full mb-4 bg-amber-50 text-amber-700 border border-amber-200 p-3 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-amber-100 transition-colors active:scale-[0.98]">
+                            <span class="text-lg">💡</span>
+                            <span>必修暗記カード 50選</span>
+                        </button>
+
+                        <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">領域別集中対策</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="category-btns">
+                            <!-- JS injected buttons -->
+                        </div>
+                    </div>
+
+                    <!-- 3. 本番模試モード（必修50問） -->
+                    <div class="bg-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl"></div>
+                        <div class="flex items-center gap-2 mb-2 relative z-10">
+                            <span class="text-2xl">🔥</span>
+                            <h3 class="text-lg font-black text-white tracking-tight">本番模試モード</h3>
+                        </div>
+                        <p class="text-xs text-slate-300 mb-5 font-medium relative z-10">
+                            全問題プール（過去5年＋オリジナル頻出）からランダムに50問出題。<br>
+                            <span class="text-red-400 font-bold">合格ラインは40問（80%）</span>です。
+                        </p>
+                        <button onclick="startApp('exam', 50)" class="relative z-10 w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-xl font-black flex items-center justify-center space-x-2 hover:from-blue-600 hover:to-indigo-700 transition-colors shadow-md active:scale-[0.98] text-lg tracking-wide">
+                            <span>必修50問に挑戦</span>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ====== Quiz View ====== -->
+            <div id="quiz-view" class="hidden pb-8">
+                <!-- Question Area -->
+                <div class="mb-6 fade-in">
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <span id="q-counter" class="bg-slate-800 text-white text-xs font-bold px-2 py-1 rounded shadow-sm"></span>
+                        <span id="q-source" class="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded border border-slate-300"></span>
+                        <span id="q-cat" class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded border border-blue-200"></span>
+                    </div>
+                    <h2 id="q-text" class="text-lg md:text-xl font-bold text-slate-800 leading-relaxed">
+                        <!-- Question Text -->
+                    </h2>
+                </div>
+
+                <!-- Options Area -->
+                <div id="options" class="space-y-3 mb-8 fade-in">
+                    <!-- Options injected by JS -->
+                </div>
+
+                <!-- Explanation Area -->
+                <div id="explanation" class="hidden space-y-5 fade-in">
+                    <div id="result-label" class="text-center py-3 rounded-xl font-black text-lg shadow-sm border"></div>
+                    <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl shadow-inner">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                            <p class="text-sm font-bold text-slate-700">解説</p>
+                        </div>
+                        <p id="exp-text" class="text-sm text-slate-700 leading-loose"></p>
+                    </div>
+                    <div id="tip-container" class="hidden bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-sm relative overflow-hidden mt-4">
+                        <div class="absolute -right-4 -top-4 text-5xl opacity-10">💡</div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-amber-500 text-lg">💡</span>
+                            <p class="text-sm font-bold text-amber-800 tracking-wider">必修暗記ポイント</p>
+                        </div>
+                        <p id="tip-text" class="text-sm text-amber-900 font-bold leading-relaxed mt-2"></p>
+                    </div>
+                    <button id="next-btn" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-md hover:bg-blue-700 transition-colors active:scale-[0.98] text-lg mt-5">
+                        次の問題へ
+                    </button>
+                </div>
+            </div>
+
+            <!-- ====== Goro (Flashcard) View ====== -->
+            <div id="goro-view" class="hidden flex flex-col h-full fade-in pb-10">
+                <div class="text-center mb-4">
+                    <span class="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full border border-amber-200">
+                        必修暗記カード <span id="goro-counter">1 / 50</span>
+                    </span>
+                </div>
+                
+                <!-- Card Container -->
+                <div class="card-container w-full h-80 md:h-96 relative cursor-pointer" onclick="flipCard()">
+                    <div id="card-inner" class="card-inner w-full h-full bg-white rounded-3xl shadow-xl border-2 border-slate-100 text-center flex flex-col items-center justify-center p-6">
+                        
+                        <!-- Front (Question/Theme) -->
+                        <div class="card-front flex flex-col items-center justify-center p-6 bg-white rounded-3xl">
+                            <div class="text-blue-500 text-6xl mb-4">❓</div>
+                            <h3 id="goro-theme" class="text-2xl font-black text-slate-800 mb-4 leading-tight"></h3>
+                            <p class="text-sm text-slate-400 font-bold animate-pulse">タップして答えを見る</p>
+                        </div>
+
+                        <!-- Back (Goro/Answer) -->
+                        <div class="card-back flex flex-col items-center justify-center p-6 bg-amber-50 rounded-3xl border-4 border-amber-200">
+                            <div class="text-amber-500 text-4xl mb-2">💡</div>
+                            <h3 class="text-lg font-bold text-amber-800 mb-2">重要ポイント</h3>
+                            <p id="goro-content" class="text-xl md:text-2xl font-black text-slate-800 leading-snug"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 mt-8">
+                    <button onclick="prevGoro()" class="flex-1 bg-slate-200 text-slate-600 py-4 rounded-xl font-bold hover:bg-slate-300 transition">前へ</button>
+                    <button onclick="nextGoro()" class="flex-1 bg-amber-500 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-amber-600 transition">次へ</button>
+                </div>
+            </div>
+
+            <!-- ====== Final Result View ====== -->
+            <div id="result-view" class="hidden py-10 text-center fade-in flex flex-col items-center justify-center min-h-[60vh]">
+                <div class="text-6xl mb-6 drop-shadow-md" id="result-emoji">📊</div>
+                <h2 class="text-2xl font-black text-slate-800 mb-8 tracking-tight">学習結果</h2>
+                
+                <div class="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 w-full max-w-sm mb-8 relative overflow-hidden">
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-4 border-slate-50 rounded-full -z-10"></div>
+                    <p class="text-slate-500 font-bold mb-2">正解率</p>
+                    <div class="text-6xl font-black mb-2" id="final-percent-container">
+                        <span id="final-percent">0</span><span class="text-3xl ml-1 text-slate-400">%</span>
+                    </div>
+                    <div class="inline-block bg-slate-100 px-4 py-1.5 rounded-full text-slate-600 font-bold text-sm">
+                        <span id="final-correct" class="text-blue-600 text-lg">0</span> / <span id="final-total">0</span> 問正解
+                    </div>
+                </div>
+                <div id="final-msg" class="text-lg md:text-xl font-bold mb-10 px-4 leading-relaxed"></div>
+                <button onclick="location.reload()" class="w-full max-w-sm bg-slate-800 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-slate-700 transition-colors active:scale-[0.98]">
+                    トップメニューに戻る
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 必修問題 厳選データ (全85問) ---
+        // 過去5年(109-113)を中心に、不足分をオリジナル・重要問題で補完
+        const masterQuestions = [
+            // 第113回
+            { id: 1, year: 113, cat: "統計", q: "令和4年（2022年）の合計特殊出生率はどれか。", opts: ["1.06", "1.26", "1.56", "1.86"], ans: 1, exp: "令和4年の合計特殊出生率は1.26で過去最低でした。必修では最新の統計数値（出生率、死因順位、高齢化率など）が必ず問われます。", tip: "【出生率】令和4年は『1.26』。過去最低レベルと覚えよう！" },
+            { id: 2, year: 113, cat: "統計", q: "令和4年の日本の死因順位で第1位はどれか。", opts: ["心疾患", "悪性新生物", "老衰", "脳血管疾患"], ans: 1, exp: "死因順位の第1位は悪性新生物（がん）で、約4人に1人が亡くなっています。第2位は心疾患、第3位は老衰です。", tip: "【死因順位】1位：がん(悪性新生物)、2位：心臓(心疾患)、3位：老衰" },
+            { id: 11, year: 113, cat: "基礎看護", q: "浣腸を行う際の体位で適切なのはどれか。", opts: ["仰臥位", "右側臥位", "左側臥位", "腹臥位"], ans: 2, exp: "直腸からS状結腸の解剖学的な走行（左側にある）に合わせて、薬液を注入しやすくするために「左側臥位（シムス位）」をとります。", tip: "【浣腸の体位】腸の形に合わせて『左側臥位（左を下）』！" },
+            { id: 12, year: 113, cat: "基礎看護", q: "インスリンの皮下注射を行う際、皮膚に対して針を刺入する角度はどれか。", opts: ["10〜15度", "45〜90度", "90度固定", "水平"], ans: 1, exp: "皮下注射の刺入角度は通常10〜30度ですが、インスリン注射（専用ペンなど）の場合は針が短いため垂直（90度）または皮膚をつまみ上げて45〜90度で行います。", tip: "【注射の角度】皮内：0〜15度、皮下：10〜30度、筋肉：45〜90度" },
+            { id: 21, year: 113, cat: "基礎看護", q: "経口投薬において、食前とはいつか。", opts: ["食事の約30分前", "食事の直前", "食事の最中", "食事の約1時間前"], ans: 0, exp: "「食前」は食事の約30分前、「食後」は食事の約30分後、「食間」は食事と食事の間（食後2時間頃）を指します。", tip: "【服薬タイミング】食前・食後＝30分、食間＝食事と食事の間（2時間後）！" },
+            { id: 22, year: 113, cat: "倫理", q: "守秘義務が規定されている法律はどれか。", opts: ["医療法", "刑法", "保健師助産師看護師法", "個人情報保護法"], ans: 2, exp: "看護師等の守秘義務は「保健師助産師看護師法」に規定されています。", tip: "【守秘義務】ナースの秘密厳守は『保助看法』！" },
+            { id: 31, year: 113, cat: "社会保障", q: "高齢化率の定義で「超高齢社会」とされる基準はどれか。", opts: ["7%", "14%", "21%", "28%"], ans: 2, exp: "7%超＝高齢化社会、14%超＝高齢社会、21%超＝超高齢社会です。日本はすでに21%を大きく超えています。", tip: "【高齢化の階段】7%：化、14%：社会、21%：超" },
+            { id: 36, year: 113, cat: "統計", q: "日本の女性の平均寿命（令和4年）に最も近いのはどれか。", opts: ["81歳", "84歳", "87歳", "90歳"], ans: 2, exp: "令和4年の簡易生命表では、男性約81歳、女性約87歳です。「男81、女87」と覚えましょう。", tip: "【平均寿命】男は81、女は87（ハナ）。女性の方が長生き！" },
+            { id: 41, year: 113, cat: "倫理", q: "ノーマライゼーションの理念はどれか。", opts: ["障害者も健常者と同様に生活できる社会を目指す", "高齢者を施設で保護する", "医療費を削減する", "早期発見・早期治療を行う"], ans: 0, exp: "ノーマライゼーションとは、障害があってもなくても、地域で当たり前に（ノーマルに）生活できる社会を目指す考え方です。", tip: "【ノーマライゼーション】障害があっても『当たり前（ノーマル）』の生活を！" },
+            { id: 46, year: 113, cat: "感染", q: "結核の感染経路はどれか。", opts: ["接触感染", "飛沫感染", "空気感染", "経口感染"], ans: 2, exp: "結核、麻疹（はしか）、水痘（みずぼうそう）の3つは「空気感染」です。", tip: "【空気感染3兄弟】結核・麻疹・水痘。N95マスクが必要！" },
+            { id: 51, year: 113, cat: "人体", q: "尿が生成される臓器はどれか。", opts: ["腎臓", "膀胱", "尿管", "尿道"], ans: 0, exp: "尿は腎臓の糸球体で濾過され、尿細管で再吸収・分泌されて生成されます。", tip: "【尿生成】工場は『腎臓』、貯蔵は『膀胱』。" },
+            { id: 52, year: 113, cat: "基礎看護", q: "患者の氏名を確認する方法で適切なのはどれか。", opts: ["患者に名乗ってもらう", "ベッドネームを見る", "病室番号で確認する", "外来の呼び出し番号で確認する"], ans: 0, exp: "誤認防止のため、患者自身にフルネームを名乗ってもらうのが最も確実です。", tip: "【患者確認】必ず『名乗ってもらう』！" },
+            { id: 53, year: 113, cat: "薬物", q: "抗血栓薬（ワルファリンなど）を服用中の患者で注意すべき食品はどれか。", opts: ["納豆", "牛乳", "グレープフルーツ", "コーヒー"], ans: 0, exp: "納豆に含まれるビタミンKは血液凝固を促進し、ワルファリン（抗凝固薬）の作用を弱めてしまうため禁忌です。", tip: "【ワルファリン】『納豆』はダメ！ビタミンKが邪魔をする。" },
+
+            // 第112回
+            { id: 3, year: 112, cat: "法律", q: "看護師免許の免許権者はどれか。", opts: ["厚生労働大臣", "都道府県知事", "保健所長", "日本看護協会長"], ans: 0, exp: "看護師、保健師、助産師の免許は「厚生労働大臣」から交付されます。准看護師は「都道府県知事」です。", tip: "【免許権者】国家資格＝『厚生労働大臣』、准＝『都道府県知事』" },
+            { id: 4, year: 112, cat: "法律", q: "看護師の業務従事者届の届出頻度はどれか。", opts: ["毎年", "2年ごと", "3年ごと", "5年ごと"], ans: 1, exp: "業務に従事している看護職は、「2年ごと」に届け出る義務があります。", tip: "【届出】『2年ごと』！" },
+            { id: 13, year: 112, cat: "人体の構造", q: "ガス交換が行われる場所はどれか。", opts: ["気管", "気管支", "細気管支", "肺胞"], ans: 3, exp: "肺における酸素と二酸化炭素のガス交換は「肺胞」で行われます。", tip: "【ガス交換】場所は『肺胞』！" },
+            { id: 14, year: 112, cat: "人体の構造", q: "インスリンを分泌する臓器はどれか。", opts: ["肝臓", "膵臓", "腎臓", "脾臓"], ans: 1, exp: "インスリンは、膵臓のランゲルハンス島β細胞から分泌されます。", tip: "【インスリン】『膵臓』から出る唯一の血糖降下ホルモン！" },
+            { id: 23, year: 112, cat: "基礎看護", q: "患者確認の方法で最も適切なのはどれか。", opts: ["病室番号で確認する", "姓（名字）だけで呼ぶ", "フルネームを名乗ってもらう", "リストバンドは見なくてよい"], ans: 2, exp: "誤認防止のため、患者自身にフルネームを名乗ってもらい、さらにリストバンド等のネームバンドと照合するのが基本です。", tip: "【患者確認】『フルネーム』を『言ってもらう』！" },
+            { id: 24, year: 112, cat: "疾病", q: "生活習慣病に含まれないのはどれか。", opts: ["糖尿病", "高血圧症", "脂質異常症", "1型アレルギー"], ans: 3, exp: "生活習慣病は生活習慣が関与する疾患群です。1型アレルギーは免疫反応によるものです。", tip: "【生活習慣病】アレルギーや感染症は含まない。" },
+            { id: 32, year: 112, cat: "基礎看護", q: "バイタルサインに含まれないのはどれか。", opts: ["体温", "身長", "血圧", "呼吸"], ans: 1, exp: "バイタルサインの基本は、体温、脈拍、呼吸、血圧の4つです。", tip: "【バイタル】熱・脈・息・血圧の4つ！" },
+            { id: 37, year: 112, cat: "基礎看護", q: "死後の処置（エンゼルケア）で義歯を装着する時期はどれか。", opts: ["死後硬直が始まる前", "死後硬直が完成した後", "解剖が終わった後", "納棺の直前"], ans: 0, exp: "死後硬直は顎関節から始まるため、硬直する前（死後すぐ）に義歯を装着します。", tip: "【エンゼルケア】入れ歯は『すぐ』入れる！" },
+            { id: 42, year: 112, cat: "社会保障", q: "労働基準法における法定労働時間はどれか。", opts: ["1日6時間、週30時間", "1日8時間、週40時間", "1日9時間、週45時間", "1日10時間、週50時間"], ans: 1, exp: "労働基準法では「1日8時間、週40時間」が法定労働時間です。", tip: "【労働時間】1日8時間、週40時間。" },
+            { id: 47, year: 112, cat: "薬物", q: "坐薬を挿入した後、患者に指示する体位・行動はどれか。", opts: ["すぐに歩行させる", "4〜5分間肛門を押さえてもらう", "腹圧をかけさせる", "入浴させる"], ans: 1, exp: "坐薬が排出されるのを防ぐため、挿入後は4〜5分間ほど肛門を押さえるか、静かに横になっていてもらいます。", tip: "【坐薬】入れたら『しばらく押さえる』！" },
+            { id: 54, year: 112, cat: "基礎看護", q: "スタンダードプリコーションで手指衛生を行うタイミングはどれか。", opts: ["手袋を外した後", "ナースステーションに入るとき", "休憩時間", "更衣の後"], ans: 0, exp: "手袋には目に見えない穴が開いている可能性があるため、手袋を外した直後は必ず手指衛生を行います。", tip: "【手洗い】手袋を外したら『必ず』洗う！" },
+            { id: 55, year: 112, cat: "人体", q: "左心室から全身に血液を送り出す血管はどれか。", opts: ["肺動脈", "肺静脈", "大動脈", "上大静脈"], ans: 2, exp: "左心室→大動脈→全身→大静脈→右心房という体循環の流れを覚えましょう。", tip: "【心臓ポンプ】左心室は全身への強力ポンプ！" },
+
+            // 第111回
+            { id: 5, year: 111, cat: "社会保障", q: "介護保険の第1号被保険者は何歳以上か。", opts: ["40歳", "60歳", "65歳", "75歳"], ans: 2, exp: "第1号被保険者は「65歳以上」です。", tip: "【介護保険】第1号：65歳〜、第2号：40歳〜" },
+            { id: 6, year: 111, cat: "倫理", q: "インフォームド・コンセントの意味はどれか。", opts: ["権利擁護", "温情的干渉", "説明と同意", "生前の意思"], ans: 2, exp: "インフォームド・コンセントは「説明と同意」です。", tip: "【用語】インフォームド・コンセント＝『説明と同意』" },
+            { id: 15, year: 111, cat: "疾病", q: "チアノーゼで皮膚や粘膜が青紫色になる原因物質はどれか。", opts: ["酸化ヘモグロビン", "還元ヘモグロビン", "メトヘモグロビン", "カルボキシヘモグロビン"], ans: 1, exp: "チアノーゼは、血液中の「還元ヘモグロビン」が5g/dL以上になった状態です。", tip: "【チアノーゼ】『還元ヘモグロビン』が増えると青くなる！" },
+            { id: 16, year: 111, cat: "疾病", q: "浮腫の原因となるのはどれか。", opts: ["血漿膠質浸透圧の上昇", "血漿膠質浸透圧の低下", "毛細血管内圧の低下", "リンパ還流の促進"], ans: 1, exp: "血漿蛋白（アルブミン）が減少すると、膠質浸透圧が低下し、水分が漏れ出して浮腫となります。", tip: "【浮腫】『アルブミン低下』＝『膠質浸透圧低下』→むくむ！" },
+            { id: 25, year: 111, cat: "感染", q: "ノロウイルス感染症の嘔吐物を処理する際に用いる消毒薬はどれか。", opts: ["エタノール", "次亜塩素酸ナトリウム", "クロルヘキシジン", "ポビドンヨード"], ans: 1, exp: "ノロウイルスにはアルコールが無効なため、「次亜塩素酸ナトリウム」を使用します。", tip: "【ノロ】アルコール無効！『次亜塩素酸』で消毒。" },
+            { id: 26, year: 111, cat: "基礎看護", q: "褥瘡が発生しやすい部位はどれか。", opts: ["大腿前面", "腹部", "仙骨部", "手掌"], ans: 2, exp: "仰臥位（仰向け）では「仙骨部」が最も褥瘡ができやすい部位です。", tip: "【褥瘡】仰向けなら『仙骨』！" },
+            { id: 33, year: 111, cat: "感染", q: "手指衛生で最も基本となるのはどれか。", opts: ["流水と石けんによる手洗い", "温風乾燥", "滅菌手袋の着用", "クレゾール石けん液の使用"], ans: 0, exp: "感染予防の基本は「流水と石けんによる手洗い」または「アルコール手指消毒」です。", tip: "【感染対策】基本は『手洗い』！" },
+            { id: 38, year: 111, cat: "薬物", q: "舌下錠として投与する薬はどれか。", opts: ["インスリン", "ニトログリセリン", "アスピリン", "モルヒネ"], ans: 1, exp: "狭心症発作時に用いるニトログリセリンは「舌下」で投与します。", tip: "【ニトロ】『舌の下』！" },
+            { id: 43, year: 111, cat: "人体の構造", q: "動脈血（酸素を多く含む血）が流れている血管はどれか。", opts: ["肺動脈", "肺静脈", "上大静脈", "下大静脈"], ans: 1, exp: "「肺静脈」は肺できれいになった血液が心臓に戻る血管なので「動脈血」が流れています。", tip: "【ひっかけ】『肺静脈』の中身は動脈血！" },
+            { id: 48, year: 111, cat: "基礎看護", q: "胃管の先端が胃内にあることを確認する方法はどれか。", opts: ["水を注入する", "気泡音を聴診する", "チューブをさらに押し込む", "患者に深呼吸させる"], ans: 1, exp: "注射器で空気を注入し、心窩部で「ボコッ」という気泡音を確認します。", tip: "【胃管確認】空気を入れて『音』を聞く！" },
+            { id: 56, year: 111, cat: "社会保障", q: "日本国憲法第25条が規定しているのはどれか。", opts: ["生存権", "教育を受ける権利", "参政権", "信仰の自由"], ans: 0, exp: "第25条は「すべて国民は、健康で文化的な最低限度の生活を営む権利を有する（生存権）」を規定しており、社会保障の基礎となります。", tip: "【憲法25条】『生存権』！社会保障の根拠。" },
+
+            // 第110回
+            { id: 7, year: 110, cat: "基礎看護", q: "成人の正常な脈拍数（安静時）の範囲はどれか。", opts: ["40〜60回/分", "60〜100回/分", "90〜120回/分", "100〜130回/分"], ans: 1, exp: "成人の安静時脈拍数は60〜100回/分です。", tip: "【脈拍】60〜100回/分が正常。" },
+            { id: 8, year: 110, cat: "基礎看護", q: "成人の1日の平均尿量はどれか。", opts: ["100〜400mL", "500〜900mL", "1000〜1500mL", "2000〜2500mL"], ans: 2, exp: "成人の1日尿量は約1000〜1500mLです。", tip: "【尿量】1.5Lペットボトル1本分くらい。" },
+            { id: 17, year: 110, cat: "基礎看護", q: "滅菌の定義はどれか。", opts: ["病原微生物を死滅させる", "すべての微生物を死滅させる", "微生物の増殖を抑制する", "感染力をなくす"], ans: 1, exp: "滅菌とは、芽胞を含む「すべての微生物」を死滅・除去することです。", tip: "【滅菌】『すべて』殺す（最強）！" },
+            { id: 18, year: 110, cat: "薬物", q: "麻薬の保管方法で正しいのはどれか。", opts: ["鍵のかかる堅固な設備に保管する", "冷蔵庫に保管する", "毒薬と一緒に保管する", "ナースステーションの机の上に置く"], ans: 0, exp: "麻薬は「鍵のかかる堅固な設備（金庫など）」に保管します。", tip: "【麻薬保管】『鍵のかかる金庫』！" },
+            { id: 27, year: 110, cat: "基礎看護", q: "成人の救急蘇生において、胸骨圧迫を行う深さはどれか。", opts: ["約2cm", "約3cm", "約5cm", "約10cm"], ans: 2, exp: "胸骨圧迫は「約5cm沈むほど」強く行います。", tip: "【胸骨圧迫】深さは『5cm』！" },
+            { id: 28, year: 110, cat: "人体の構造", q: "心臓のペースメーカーの役割をしているのはどれか。", opts: ["洞結節（洞房結節）", "房室結節", "ヒス束", "プルキンエ線維"], ans: 0, exp: "右心房にある「洞結節」がペースメーカーです。", tip: "【刺激伝導系】スタートは『洞結節』！" },
+            { id: 34, year: 110, cat: "疾病", q: "HbA1cは、過去どれくらいの期間の血糖状態を反映するか。", opts: ["1〜2日間", "1〜2週間", "1〜2か月間", "1〜2年間"], ans: 2, exp: "HbA1cは過去「1〜2か月」の平均血糖値を反映します。", tip: "【HbA1c】過去『1〜2ヶ月』の成績表！" },
+            { id: 39, year: 110, cat: "基礎看護", q: "成人の安静時呼吸数の基準値はどれか。", opts: ["8〜10回/分", "12〜20回/分", "25〜30回/分", "35〜40回/分"], ans: 1, exp: "成人の正常呼吸数は12〜20回/分です。", tip: "【呼吸数】大人は『12〜20回』。" },
+            { id: 44, year: 110, cat: "基礎看護", q: "嚥下困難な患者の食事形態で適切なのはどれか。", opts: ["きざみ食", "とろみ食", "水分", "パサパサしたパン"], ans: 1, exp: "誤嚥を防ぐため、まとまりやすい「とろみ食」が適しています。", tip: "【嚥下食】『とろみ』をつけてゆっくり。" },
+            { id: 49, year: 110, cat: "基礎看護", q: "入浴が禁忌となるバイタルサインの目安（収縮期血圧）はどれか。", opts: ["100mmHg以上", "120mmHg以上", "140mmHg以上", "180mmHg以上"], ans: 3, exp: "収縮期血圧が180mmHg以上の場合は入浴を控えます。", tip: "【入浴禁止】上が180以上ならダメ！" },
+            { id: 57, year: 110, cat: "人体", q: "ビタミンDの欠乏によって起こる疾患はどれか。", opts: ["壊血病", "脚気", "夜盲症", "くる病"], ans: 3, exp: "ビタミンD欠乏は、小児では「くる病」、成人では「骨軟化症」を引き起こします。C欠乏＝壊血病、B1欠乏＝脚気、A欠乏＝夜盲症。", tip: "【ビタミン欠乏】Dは骨（くる病）、Cは血（壊血病）。" },
+
+            // 第109回
+            { id: 9, year: 109, cat: "感染", q: "標準予防策で、感染源として扱わないのはどれか。", opts: ["血液", "汗", "傷のある皮膚", "粘膜"], ans: 1, exp: "標準予防策では「汗を除くすべての湿性生体物質」を感染源とみなします。汗は対象外です。", tip: "【標準予防策】『汗』はキレイとみなす。" },
+            { id: 10, year: 109, cat: "感染", q: "針刺し事故の予防策として適切なのはどれか。", opts: ["リキャップをする", "使用後の針は廃棄容器に捨てる", "針を曲げてから捨てる", "針をベッドサイドに置く"], ans: 1, exp: "リキャップは禁止です。使用後はそのまま廃棄容器に捨てます。", tip: "【針刺し防止】『リキャップ禁止』！" },
+            { id: 19, year: 109, cat: "基礎看護", q: "成人の高血圧の基準（収縮期/拡張期）はどれか。", opts: ["120/80 mmHg以上", "130/85 mmHg以上", "140/90 mmHg以上", "150/95 mmHg以上"], ans: 2, exp: "収縮期140mmHg以上、または拡張期90mmHg以上が高血圧です。", tip: "【高血圧】上140 / 下90 以上！" },
+            { id: 20, year: 109, cat: "基礎看護", q: "脱衣室と浴室の温度差を小さくする対策はどれか。", opts: ["ヒートショック対策", "シックハウス対策", "バリアフリー対策", "ユニバーサルデザイン"], ans: 0, exp: "急激な温度変化による血圧変動（ヒートショック）を防ぐためです。", tip: "【ヒートショック】温度差に注意。" },
+            { id: 29, year: 109, cat: "社会保障", q: "日本の国民皆保険制度において、すべての国民が加入しなければならないのはどれか。", opts: ["公的医療保険", "生命保険", "個人年金", "がん保険"], ans: 0, exp: "日本は国民皆保険制度で、すべての国民が公的医療保険に加入します。", tip: "【国民皆保険】全員『公的医療保険』に入る。" },
+            { id: 30, year: 109, cat: "基礎看護", q: "ストレッチャーでの移送時、患者の足側を進行方向にする理由はどれか。", opts: ["患者の視界を確保し不安を軽減するため", "看護師が足元を確認しやすいため", "頭部の揺れを防ぐため", "エレベーターに乗りやすくするため"], ans: 0, exp: "進行方向が見えるようにして不安を軽減するため、原則「足側」を先にします。", tip: "【移送】原則『足が先』！" },
+            { id: 35, year: 109, cat: "基礎看護", q: "乏尿の定義（1日尿量）はどれか。", opts: ["100mL以下", "400mL以下", "1000mL以下", "2000mL以上"], ans: 1, exp: "400mL以下を「乏尿」、100mL以下を「無尿」といいます。", tip: "【尿量】400以下＝乏尿、100以下＝無尿" },
+            { id: 40, year: 109, cat: "基礎看護", q: "グリセリン浣腸液の温度で適切なのはどれか。", opts: ["10〜15℃", "20〜25℃", "40〜41℃", "50〜55℃"], ans: 2, exp: "腸管への刺激を避け、効果を高めるために「40〜41℃（体温よりやや高め）」にします。", tip: "【浣腸温度】『40〜41℃』！" },
+            { id: 45, year: 109, cat: "基礎看護", q: "ボディメカニクスの原則で正しいのはどれか。", opts: ["支持基底面を狭くする", "重心を高くする", "対象物を体から離す", "大きな筋群を使用する"], ans: 3, exp: "支持基底面を広く、重心を低く、対象物を近づけ、大きな筋肉を使います。", tip: "【ボディメカニクス】足を開いて、腰を落として、近づける。" },
+            { id: 50, year: 109, cat: "基礎看護", q: "氷枕を使用する目的はどれか。", opts: ["血管の拡張", "代謝の促進", "鎮痛・消炎", "筋緊張の緩和"], ans: 2, exp: "冷罨法は、血管収縮、代謝抑制、鎮痛・消炎効果があります。", tip: "【冷罨法】冷やすと『腫れ・痛み』が引く。" },
+            { id: 58, year: 109, cat: "社会保障", q: "ノーマライゼーションの考え方に基づき制定された法律はどれか。", opts: ["生活保護法", "児童福祉法", "障害者基本法", "老人福祉法"], ans: 2, exp: "障害者基本法はノーマライゼーションの理念を基礎としています。", tip: "【ノーマライゼーション】障害者関連法規の基礎。" },
+            { id: 59, year: 109, cat: "人体", q: "成人の骨の数はどれか。", opts: ["約100個", "約200個", "約300個", "約400個"], ans: 1, exp: "成人の骨は約200個（206個）です。", tip: "【骨の数】約200個。" },
+
+            // オリジナル予想問題（重要頻出）
+            { id: 60, year: "オリジナル", cat: "人体", q: "脳幹に含まれないのはどれか。", opts: ["中脳", "橋", "延髄", "小脳"], ans: 3, exp: "脳幹は「中脳、橋、延髄」の3つを指します。生命維持の中枢です。小脳は含まれません。", tip: "【脳幹】中脳・橋・延髄の3つ！" },
+            { id: 61, year: "オリジナル", cat: "人体", q: "横隔膜を支配する神経はどれか。", opts: ["迷走神経", "横隔神経", "肋間神経", "副神経"], ans: 1, exp: "横隔膜は「横隔神経（C3-C5）」によって支配されています。", tip: "【横隔膜】その名の通り『横隔神経』。" },
+            { id: 62, year: "オリジナル", cat: "感染", q: "N95マスクが必要な感染症はどれか。", opts: ["インフルエンザ", "結核", "風疹", "マイコプラズマ肺炎"], ans: 1, exp: "空気感染する「結核」「麻疹」「水痘」にはN95マスクが必要です。他は飛沫感染なのでサージカルマスクで対応します。", tip: "【N95】空気感染（結核など）に使う！" },
+            { id: 63, year: "オリジナル", cat: "基礎看護", q: "成人の脈拍測定の第一選択部位はどれか。", opts: ["橈骨動脈", "上腕動脈", "大腿動脈", "足背動脈"], ans: 0, exp: "通常、成人の脈拍測定は手首の「橈骨（とうこつ）動脈」で行います。", tip: "【脈拍測定】手首の『橈骨動脈』が基本。" },
+            { id: 64, year: "オリジナル", cat: "薬物", q: "アナフィラキシーショックの第一選択薬はどれか。", opts: ["アドレナリン", "アトロピン", "リドカイン", "フロセミド"], ans: 0, exp: "アナフィラキシーショックには、ただちに「アドレナリン」を筋肉内注射します。", tip: "【アナフィラキシー】迷わず『アドレナリン』！" },
+            { id: 65, year: "オリジナル", cat: "倫理", q: "パターナリズムの説明で正しいのはどれか。", opts: ["患者の自己決定権を尊重する", "医療者が患者の最善を判断して決定する", "患者の権利を擁護する", "情報を開示して同意を得る"], ans: 1, exp: "パターナリズム（父権主義）は、医療者が「患者のため」という理由で、患者の意向よりも医療者の判断を優先させることです。", tip: "【パターナリズム】医療者主導の『父権主義』。" },
+            { id: 66, year: "オリジナル", cat: "社会保障", q: "要介護認定を行うのはどこか。", opts: ["都道府県", "市町村", "年金事務所", "病院"], ans: 1, exp: "介護保険の保険者は「市町村（および特別区）」であり、要介護認定も市町村が行います。", tip: "【介護保険】保険者も認定も『市町村』！" }
+        ];
+
+        // --- 必修専用 語呂合わせデータ (50選) ---
+        const mnemonicData = [
+            { theme: "合計特殊出生率(R4)", goro: "【ヒ(1)ン(2)ニ(2)ュー(6)で過去最低】\n1.26\n※令和4年は過去最低を更新しました。" },
+            { theme: "死因順位(R4)", goro: "【がん、しん、ろう】\n1位：悪性新生物(がん)\n2位：心疾患\n3位：老衰\n(4位：脳血管疾患)" },
+            { theme: "高齢化率の区分", goro: "【ナ(7)イ(14)フ(21)で切る高齢化】\n高齢化社会：7%\n高齢社会：14%\n超高齢社会：21%\n(日本は現在約29%で超高齢社会)" },
+            { theme: "メタボ診断基準(腹囲)", goro: "【パパ(85)く(90)れる】\n男性：85cm以上\n女性：90cm以上" },
+            { theme: "特定健康診査", goro: "【ヨン(40)ナ(74)ナ】\n対象年齢：40歳〜74歳\n(メタボ健診のこと)" },
+            { theme: "介護保険 第1号", goro: "【老後(65)は1号】\n65歳以上\n(原因問わず要介護なら給付)" },
+            { theme: "介護保険 第2号", goro: "【シ(40)マ(末=65未満)れる2号】\n40歳以上65歳未満\n(特定疾病のみ給付)" },
+            { theme: "看護師免許", goro: "【大臣から紙をもらう】\n免許権者：厚生労働大臣\n(准看護師は知事)" },
+            { theme: "業務従事者届", goro: "【ピース(2)サインで届出】\n2年ごとに届出\n(保助看法)" },
+            { theme: "麻薬の保管", goro: "【鍵のかかる金庫】\n堅固な設備に保管\n(麻薬及び向精神薬取締法)" },
+            { theme: "毒薬・劇薬の表示", goro: "【毒は黒地に白、劇は白地に赤】\n毒薬：黒地に白枠・白字(目立つ)\n劇薬：白地に赤枠・赤字" },
+            { theme: "バイタル(体温)", goro: "【サブ(36)ロク(36)からナ(37)ナ(37)】\n36.0〜37.0℃" },
+            { theme: "バイタル(脈拍)", goro: "【ム(6)レ(0)ないヒャク(100)】\n60〜100回/分\n(100以上で頻脈、60未満で徐脈)" },
+            { theme: "バイタル(呼吸)", goro: "【イチ(1)ニ(2)を争うニ(2)ジュ(0)ウ】\n12〜20回/分" },
+            { theme: "バイタル(血圧)", goro: "【医師(14)はク(90)レバー】\n高血圧基準：140/90 mmHg以上" },
+            { theme: "乏尿・無尿", goro: "【シ(4)ン(0)パイない(0)、ヒ(1)ン(0)ニ(0)ョウ】\n乏尿：400mL以下\n無尿：100mL以下" },
+            { theme: "1日の尿量", goro: "【ペットボトル1本(1.5L)】\n約1000〜1500mL" },
+            { theme: "BMIの計算", goro: "【体重 ÷ 身長 ÷ 身長】\nkg ÷ m ÷ m\n(標準は22)" },
+            { theme: "肥満の基準(BMI)", goro: "【ニ(2)ゴ(5)リ酒】\nBMI 25以上で肥満" },
+            { theme: "やせの基準(BMI)", goro: "【イ(1)ハ(8)チ(5)ゴロ】\nBMI 18.5未満でやせ(低体重)" },
+            { theme: "空気感染する病気", goro: "【結核の水はマズイ】\n結核\n水：水痘\nマ：麻疹(はしか)\n※N95マスクが必要" },
+            { theme: "飛沫感染する病気", goro: "【インフルで風邪ひいてマイコ】\nインフルエンザ\n風疹\nマイコプラズマ\n※サージカルマスクが必要" },
+            { theme: "接触感染する病気", goro: "【MRがO(オー)型】\nMRSA\nO-157\n(ノロウイルスも接触・経口)" },
+            { theme: "注射の角度", goro: "【皮内0、皮下斜め、筋肉直角】\n皮内：0〜15度\n皮下：10〜30度\n筋肉：45〜90度" },
+            { theme: "インスリン注射部位", goro: "【腹・腕・太もも・お尻】\n吸収速い順：腹部＞上腕＞大腿＞殿部" },
+            { theme: "グリセリン浣腸", goro: "【シムス位で40度】\n左側臥位(シムス位)\n液温：40〜41℃" },
+            { theme: "入浴の湯温", goro: "【体温プラス4度】\n40〜42℃が適温\n(42℃以上は交感神経刺激)" },
+            { theme: "ストレッチャー移送", goro: "【足が先】\n患者の足側を進行方向にする\n(視界確保、酔い防止)" },
+            { theme: "車椅子での坂道", goro: "【上りは前向き、下りは後ろ向き】\n下りはバックで降りる(転落防止)" },
+            { theme: "杖歩行の順番(平地)", goro: "【杖、患、健】\n1.杖\n2.患側(悪い足)\n3.健側(良い足)" },
+            { theme: "階段の上り(杖)", goro: "【杖、健、患】\n良い足から上がる(体を引き上げるため)" },
+            { theme: "階段の下り(杖)", goro: "【杖、患、健】\n悪い足から下ろす(平地と同じ)" },
+            { theme: "褥瘡好発(仰臥位)", goro: "【仙骨】\nおしりの骨(仙骨部)が一番多い" },
+            { theme: "褥瘡好発(側臥位)", goro: "【大転子】\n太ももの付け根の外側" },
+            { theme: "滅菌と消毒", goro: "【滅菌はゼロ、消毒は減菌】\n滅菌：すべての菌を殺す\n消毒：病原菌を殺す" },
+            { theme: "高圧蒸気滅菌", goro: "【ニ(2)イ(1)サン(3)の仕事(1510)】\n2気圧、121℃、15〜20分" },
+            { theme: "胃管の長さ", goro: "【鼻・耳・みぞおち】\n鼻尖〜耳垂〜剣状突起の長さ" },
+            { theme: "気管吸引圧", goro: "【ニ(2)ジュ(0)ウまで】\n成人：-20kPa(-150mmHg)以下\n※強すぎると粘膜損傷" },
+            { theme: "酸素ボンベの色", goro: "【黒い酸素】\n黒色\n(二酸化炭素は緑、笑気は灰)" },
+            { theme: "救急カートの薬(ボスミン)", goro: "【ボスはアドレナリン】\nボスミン＝アドレナリン\n(心停止、アナフィラキシーに使用)" },
+            { theme: "胸骨圧迫の位置", goro: "【胸の真ん中】\n胸骨の下半分" },
+            { theme: "胸骨圧迫の深さ", goro: "【ゴ(5)ン(0)と沈む】\n約5cm" },
+            { theme: "AED", goro: "【開けて、貼って、離れる】\n電源ON→パッド貼付→解析→通電" },
+            { theme: "ジャパン・コーマ・スケール", goro: "【1桁覚醒、2桁反応、3桁なし】\nI(1桁)：刺激しなくても覚醒\nII(2桁)：刺激すると覚醒\nIII(3桁)：刺激しても覚醒しない" },
+            { theme: "グラスゴー・コーマ・スケール", goro: "【E4V5M6】\n開眼(E)4点満点\n発語(V)5点満点\n運動(M)6点満点\n合計15点満点" },
+            { theme: "死の三徴候", goro: "【息・心・瞳】\n呼吸停止\n心拍停止\n瞳孔散大" },
+            { theme: "医療倫理4原則", goro: "【自律・無危害・善行・正義】\n自分で決める、害さない、良くする、公平に" },
+            { theme: "ノーマライゼーション", goro: "【普通(ノーマル)の暮らし】\n障害があっても地域で当たり前に暮らす" },
+            { theme: "リビング・ウィル", goro: "【生前の意思】\n終末期医療などの希望を元気なうちに書く" },
+            { theme: "エリクソンの発達課題(老年期)", goro: "【統合 vs 絶望】\n人生を振り返り「これで良かった」と思えるか" }
+        ];
+
+        // --- 状態管理 ---
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let correctCount = 0;
+        let isExamMode = false;
+        let currentGoroIndex = 0;
+
+        // --- DOM要素 ---
+        const menuView = document.getElementById('menu-view');
+        const quizView = document.getElementById('quiz-view');
+        const goroView = document.getElementById('goro-view');
+        const resultView = document.getElementById('result-view');
+        const statusBar = document.getElementById('status-bar');
+
+        // --- 初期化 ---
+        function initMenu() {
+            // 過去問ボタンの生成 (113-109)
+            const years = [113, 112, 111, 110, 109];
+            const yearBtns = document.getElementById('year-btns');
+            years.forEach(y => {
+                const count = masterQuestions.filter(q => q.year === y).length;
+                const btn = document.createElement('button');
+                btn.className = "bg-white border border-slate-200 p-3 rounded-xl text-sm font-bold text-slate-700 hover:border-blue-400 hover:bg-blue-50 transition shadow-sm flex flex-col items-center justify-center gap-1 active:scale-95";
+                btn.innerHTML = `
+                    <span>第 ${y} 回</span>
+                    <span class="text-[10px] text-slate-400 font-normal">${count}問</span>
+                `;
+                btn.onclick = () => startApp('year', y);
+                yearBtns.appendChild(btn);
+            });
+
+            // 分野別ボタンの生成
+            const cats = [...new Set(masterQuestions.map(q => q.cat))];
+            const catBtns = document.getElementById('category-btns');
+            cats.forEach(c => {
+                const count = masterQuestions.filter(q => q.cat === c).length;
+                const btn = document.createElement('button');
+                btn.className = "bg-white border border-slate-200 p-3 rounded-xl text-sm font-bold text-slate-700 hover:border-blue-400 hover:bg-blue-50 transition shadow-sm flex justify-between items-center active:scale-95";
+                btn.innerHTML = `
+                    <span>${c}</span>
+                    <span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded font-normal">${count}問</span>
+                `;
+                btn.onclick = () => startApp('category', c);
+                catBtns.appendChild(btn);
+            });
+        }
+
+        // --- アプリ開始処理 ---
+        function startApp(mode, value) {
+            currentIndex = 0;
+            correctCount = 0;
+            isExamMode = (mode === 'exam');
+            
+            menuView.classList.add('hidden');
+            quizView.classList.add('hidden');
+            goroView.classList.add('hidden');
+            statusBar.classList.add('hidden');
+            
+            if (mode === 'goro') {
+                goroView.classList.remove('hidden');
+                currentGoroIndex = 0;
+                renderGoro();
+                return;
+            }
+
+            if (mode === 'year') {
+                currentQuestions = masterQuestions.filter(q => q.year === value);
+            } else if (mode === 'category') {
+                currentQuestions = masterQuestions.filter(q => q.cat === value);
+            } else if (mode === 'random') {
+                currentQuestions = [...masterQuestions].sort(() => Math.random() - 0.5).slice(0, value);
+            } else if (mode === 'exam') {
+                // 本番模試モード：全問題プールからランダムに50問
+                let examQuestions = [];
+                const targetCount = value; // 50
+                // データのコピーを作成してシャッフル
+                let shuffled = [...masterQuestions].sort(() => Math.random() - 0.5);
+                
+                // データ数が足りない場合のループ処理（※実際のアプリではDBから250問取得する想定）
+                while(examQuestions.length < targetCount) {
+                     for(let q of shuffled) {
+                        if(examQuestions.length < targetCount) {
+                            // オブジェクトのコピーをプッシュ（参照渡しを防ぐ）
+                            examQuestions.push({...q});
+                        } else {
+                            break;
+                        }
+                    }
+                    // 一巡しても足りなければ再度シャッフルして追加
+                    if(examQuestions.length < targetCount) {
+                        shuffled = [...masterQuestions].sort(() => Math.random() - 0.5);
+                    }
+                }
+                currentQuestions = examQuestions;
+            }
+
+            quizView.classList.remove('hidden');
+            statusBar.classList.remove('hidden');
+            window.scrollTo(0, 0);
+            renderQuestion();
+        }
+
+        // --- 語呂合わせ機能 ---
+        function renderGoro() {
+            const item = mnemonicData[currentGoroIndex];
+            document.getElementById('goro-counter').innerText = `${currentGoroIndex + 1} / ${mnemonicData.length}`;
+            document.getElementById('goro-theme').innerText = item.theme;
+            document.getElementById('goro-content').innerText = item.goro;
+            document.querySelector('.card-container').classList.remove('card-flipped');
+        }
+
+        function flipCard() {
+            document.querySelector('.card-container').classList.toggle('card-flipped');
+        }
+
+        function nextGoro() {
+            if (currentGoroIndex < mnemonicData.length - 1) {
+                currentGoroIndex++;
+                renderGoro();
+            } else {
+                alert("最後のカードです！");
+            }
+        }
+
+        function prevGoro() {
+            if (currentGoroIndex > 0) {
+                currentGoroIndex--;
+                renderGoro();
+            }
+        }
+
+        // --- クイズ描画 ---
+        function renderQuestion() {
+            const q = currentQuestions[currentIndex];
+            let counterPrefix = isExamMode ? "必修模試" : "問題";
+            document.getElementById('q-counter').innerText = `${counterPrefix} ${currentIndex + 1} / ${currentQuestions.length}`;
+            
+            // 出題年度の表示
+            const sourceEl = document.getElementById('q-source');
+            if (typeof q.year === 'number') {
+                 sourceEl.innerText = `第 ${q.year} 回`;
+                 sourceEl.className = "bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded border border-slate-300";
+            } else {
+                 sourceEl.innerText = q.year; // "オリジナル"など
+                 sourceEl.className = "bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded border border-amber-200";
+            }
+
+            document.getElementById('q-cat').innerText = q.cat;
+            document.getElementById('q-text').innerText = q.q;
+            document.getElementById('progress-text').innerText = `${currentIndex + 1} / ${currentQuestions.length}`;
+            document.getElementById('score-text').innerText = `正解: ${correctCount}`;
+            
+            setTimeout(() => {
+                document.getElementById('progress-fill').style.width = `${((currentIndex) / currentQuestions.length) * 100}%`;
+            }, 50);
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            document.getElementById('explanation').classList.add('hidden');
+
+            q.opts.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "option-card w-full text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-blue-300 font-medium text-slate-700 shadow-sm text-sm flex items-start gap-3";
+                btn.innerHTML = `
+                    <span class="inline-flex items-center justify-center min-w-[24px] h-6 rounded-full bg-slate-100 text-slate-500 text-xs font-bold shrink-0 mt-0.5">${idx + 1}</span>
+                    <span class="leading-relaxed">${opt}</span>
+                `;
+                btn.onclick = () => selectOption(idx, btn);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIdx, selectedBtn) {
+            const q = currentQuestions[currentIndex];
+            const allBtns = document.getElementById('options').querySelectorAll('button');
+            
+            allBtns.forEach(b => {
+                b.disabled = true;
+                b.classList.remove('hover:border-blue-300');
+            });
+
+            const resultLabel = document.getElementById('result-label');
+            if (selectedIdx === q.ans) {
+                selectedBtn.classList.add('correct-anim');
+                correctCount++;
+                document.getElementById('score-text').innerText = `正解: ${correctCount}`;
+                resultLabel.innerText = "⭕️ 正解";
+                resultLabel.className = "text-center py-3 rounded-xl font-black text-lg shadow-sm border bg-emerald-100 text-emerald-700 border-emerald-200";
+            } else {
+                selectedBtn.classList.add('incorrect-anim');
+                allBtns[q.ans].classList.add('correct-anim');
+                resultLabel.innerText = "❌ 不正解";
+                resultLabel.className = "text-center py-3 rounded-xl font-black text-lg shadow-sm border bg-red-100 text-red-700 border-red-200";
+            }
+
+            document.getElementById('exp-text').innerText = q.exp;
+            
+            const tipContainer = document.getElementById('tip-container');
+            const tipText = document.getElementById('tip-text');
+            if (q.tip) {
+                tipText.innerText = q.tip;
+                tipContainer.classList.remove('hidden');
+            } else {
+                tipContainer.classList.add('hidden');
+            }
+
+            const expDiv = document.getElementById('explanation');
+            expDiv.classList.remove('hidden');
+            setTimeout(() => {
+                expDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        document.getElementById('next-btn').onclick = () => {
+            currentIndex++;
+            if (currentIndex < currentQuestions.length) {
+                renderQuestion();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                document.getElementById('progress-fill').style.width = '100%';
+                setTimeout(showFinalResult, 300);
+            }
+        };
+
+        function showFinalResult() {
+            quizView.classList.add('hidden');
+            statusBar.classList.add('hidden');
+            resultView.classList.remove('hidden');
+            window.scrollTo(0, 0);
+            
+            const percent = Math.round((correctCount / currentQuestions.length) * 100);
+            let currentDisplay = 0;
+            const percentEl = document.getElementById('final-percent');
+            const percentContainer = document.getElementById('final-percent-container');
+            
+            const timer = setInterval(() => {
+                currentDisplay += 2;
+                if(currentDisplay >= percent) {
+                    currentDisplay = percent;
+                    clearInterval(timer);
+                    // 必修は80%がボーダー
+                    if (percent >= 80) {
+                        percentContainer.classList.add('text-emerald-500');
+                    } else {
+                        percentContainer.classList.add('text-rose-500');
+                    }
+                }
+                percentEl.innerText = currentDisplay;
+            }, 20);
+
+            document.getElementById('final-correct').innerText = correctCount;
+            document.getElementById('final-total').innerText = currentQuestions.length;
+
+            const msg = document.getElementById('final-msg');
+            const emoji = document.getElementById('result-emoji');
+            
+            if (isExamMode) {
+                if (percent >= 80) {
+                    emoji.innerText = "🎊";
+                    msg.innerHTML = "必修50問、合格ライン突破です！<br>絶対評価の80%を見事クリアしました。この調子なら本番も安心です！";
+                    msg.className = "text-lg md:text-xl font-bold mb-10 px-4 leading-relaxed text-blue-600";
+                } else {
+                    emoji.innerText = "⚠️";
+                    msg.innerHTML = "必修問題は80%以上が絶対条件です！<br>あと少しで不合格になってしまいます。間違えた基礎問題を必ず復習しましょう。";
+                    msg.className = "text-lg md:text-xl font-bold mb-10 px-4 leading-relaxed text-rose-600";
+                }
+            } else {
+                if (percent >= 90) {
+                    emoji.innerText = "🏆";
+                    msg.innerText = "完璧です！基礎知識は盤石です。";
+                    msg.className = "text-lg md:text-xl font-bold mb-10 px-4 leading-relaxed text-emerald-600";
+                } else if (percent >= 80) {
+                    emoji.innerText = "🎉";
+                    msg.innerText = "合格ライン（80%）をクリア！この調子で基礎を維持しましょう。";
+                    msg.className = "text-lg md:text-xl font-bold mb-10 px-4 leading-relaxed text-blue-600";
+                } else {
+                    emoji.innerText = "💪";
+                    msg.innerText = "必修は80%（40点）取れないと即不合格です。基礎の徹底復習をお願いします！";
+                    msg.className = "text-lg md:text-xl font-bold mb-10 px-4 leading-relaxed text-rose-600";
+                }
+            }
+        }
+
+        document.getElementById('home-btn').onclick = () => {
+            if (!menuView.classList.contains('hidden')) {
+                location.reload();
+                return;
+            }
+            const confirmMsg = isExamMode 
+                ? "【警告】必修模試モード実行中です。\n途中で終了すると記録は保存されません。トップメニューに戻りますか？"
+                : "トップメニューに戻りますか？";
+            
+            if (confirm(confirmMsg)) {
+                location.reload();
+            }
+        };
+
+        window.onload = initMenu;
+    </script>
+</body>
+</html>
